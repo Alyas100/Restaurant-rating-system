@@ -1,120 +1,283 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight, MapPin, Star, Utensils } from "lucide-react";
+import { useState } from "react";
 
-export default function Home() {
+type Restaurant = {
+  id: number;
+  name: string;
+  category: string;
+  emoji: string;
+  description: string;
+  rating: number;
+  reviews: number;
+  address: string;
+};
+
+type Review = {
+  id: number;
+  author: string;
+  rating: number;
+  text: string;
+  date: string;
+};
+
+// Mock Data
+const mockRestaurants: Restaurant[] = [
+  {
+    id: 1,
+    name: "Spice Haven",
+    category: "Indian",
+    emoji: "🍛",
+    description:
+      "Authentic Indian cuisine with traditional recipes passed down through generations.",
+    rating: 4.5,
+    reviews: 120,
+    address: "123 Main St, Downtown, City 12345",
+  },
+  {
+    id: 2,
+    name: "Kimchi House",
+    category: "Korean",
+    emoji: "🥢",
+    description:
+      "Modern Korean restaurant featuring bibimbap, bulgogi, and delicious side dishes.",
+    rating: 4.8,
+    reviews: 98,
+    address: "456 Oak Ave, Midtown, City 12345",
+  },
+  {
+    id: 3,
+    name: "La Bella Italia",
+    category: "Italian",
+    emoji: "🍝",
+    description:
+      "Cozy Italian trattoria with handmade pasta and authentic sauces.",
+    rating: 4.6,
+    reviews: 156,
+    address: "789 Pine Rd, Uptown, City 12345",
+  },
+  {
+    id: 4,
+    name: "The Burger Joint",
+    category: "Western",
+    emoji: "🍔",
+    description:
+      "Gourmet burgers with premium ingredients and creative toppings.",
+    rating: 4.3,
+    reviews: 204,
+    address: "321 Elm St, Downtown, City 12345",
+  },
+  {
+    id: 5,
+    name: "Sakura Sushi",
+    category: "Japanese",
+    emoji: "🍣",
+    description:
+      "Fresh sushi bar with skilled chefs and premium fish selection.",
+    rating: 4.7,
+    reviews: 178,
+    address: "654 Maple Dr, Harbor, City 12345",
+  },
+  {
+    id: 6,
+    name: "Taco Fiesta",
+    category: "Mexican",
+    emoji: "🌮",
+    description: "Vibrant Mexican restaurant with street tacos and margaritas.",
+    rating: 4.4,
+    reviews: 142,
+    address: "987 Cedar Ln, Arts District, City 12345",
+  },
+];
+
+export default function HomePage() {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredRestaurants = restaurants.filter(
+    (r) =>
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#0f0c29] text-white selection:bg-purple-500/30">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob" />
-        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-indigo-600/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-pink-600/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
-      </div>
-
-      {/* Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500" />
-          <span className="text-xl font-bold tracking-tight">GlassReviews</span>
+    <div
+      style={{
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        background: "#f8f8f6",
+      }}
+    >
+      {/* Navbar */}
+      <nav
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "1rem 2rem",
+          background: "#fff",
+          borderBottom: "1px solid #e0e0dc",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: 600,
+            color: "#2d7d8f",
+            cursor: "pointer",
+          }}
+        >
+          🍽️ FoodReview
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
-            Admin Dashboard
-          </Link>
-          <Link
-            href="/explore"
-            className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md transition-all text-sm font-medium"
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <a
+            style={{
+              textDecoration: "none",
+              color: "#1a1a1a",
+              cursor: "pointer",
+            }}
           >
-            Launch App
-          </Link>
+            Home
+          </a>
+          <a
+            style={{
+              textDecoration: "none",
+              color: "#1a1a1a",
+              cursor: "pointer",
+            }}
+          >
+            Restaurants
+          </a>
+          <button
+            style={{
+              background: "#2d7d8f",
+              color: "#fff",
+              borderRadius: "6px",
+              padding: "0.5rem 1rem",
+            }}
+          >
+            Login
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-4xl mx-auto space-y-8"
+      {/* Hero */}
+      <div
+        style={{
+          textAlign: "center",
+          padding: "3rem 2rem",
+          background: "linear-gradient(135deg, #f8f8f6 0%, #f0f0ec 100%)",
+        }}
+      >
+        <h1 style={{ fontSize: "2.5rem", color: "#2d7d8f" }}>
+          Find Your Next Favorite Restaurant
+        </h1>
+        <p
+          style={{
+            color: "#666",
+            fontSize: "1.1rem",
+            maxWidth: "600px",
+            margin: "1rem auto 2rem",
+          }}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-medium text-emerald-300">Live in Delhi NCR</span>
-          </div>
-
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40">
-            Dining in a <br />
-            New Dimension
-          </h1>
-
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
-            Experience the future of restaurant discovery. Immersive reviews,
-            verified ratings, and a fluid interface designed for the modern foodie.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              href="/explore"
-              className="group relative inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform"
-            >
-              Start Exploring
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-md transition-colors"
-            >
-              For Business
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Floating Cards Demo */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, x: -100 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 1 }}
-            className="absolute top-1/4 left-[10%] glass-panel p-4 rounded-2xl w-64 rotate-[-6deg]"
+          Discover amazing restaurants and read authentic reviews from real
+          diners
+        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.5rem",
+            maxWidth: "500px",
+            margin: "0 auto",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Search restaurants..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "0.8rem",
+              borderRadius: "6px",
+              border: "1px solid #e0e0dc",
+              fontSize: "1rem",
+            }}
+          />
+          <button
+            style={{
+              background: "#2d7d8f",
+              color: "#fff",
+              padding: "0.8rem 1.5rem",
+              borderRadius: "6px",
+            }}
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Utensils className="w-5 h-5 text-orange-400" />
-              </div>
-              <div>
-                <div className="font-medium">The Glass Onion</div>
-                <div className="text-xs text-white/50">Modern European</div>
-              </div>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full w-3/4" />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7, duration: 1 }}
-            className="absolute bottom-1/4 right-[10%] glass-panel p-4 rounded-2xl w-64 rotate-[6deg]"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-medium">Average Rating</div>
-              <div className="flex items-center gap-1 text-yellow-400 text-sm">
-                <Star className="w-4 h-4 fill-yellow-400" />
-                4.9
-              </div>
-            </div>
-            <div className="text-2xl font-bold">12,453</div>
-            <div className="text-xs text-white/50">Verified Reviews</div>
-          </motion.div>
+            Search
+          </button>
         </div>
-      </main>
+      </div>
+
+      {/* Restaurant Grid */}
+      <div
+        style={{ maxWidth: "1200px", margin: "2rem auto", padding: "0 2rem" }}
+      >
+        <h2 style={{ marginBottom: "1rem" }}>Featured Restaurants</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: "1.5rem",
+          }}
+        >
+          {filteredRestaurants.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                background: "#fff",
+                borderRadius: "8px",
+                overflow: "hidden",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                cursor: "pointer",
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              onClick={() => alert(`View details for ${r.name}`)}
+            >
+              <div
+                style={{
+                  height: "180px",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  fontSize: "3rem",
+                  background: "#f8f8f6",
+                }}
+              >
+                {r.emoji}
+              </div>
+              <div style={{ padding: "1rem" }}>
+                <h3 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+                  {r.name}
+                </h3>
+                <p style={{ color: "#666", marginBottom: "0.5rem" }}>
+                  {r.category}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span style={{ color: "#ffc107" }}>
+                    {"⭐".repeat(Math.floor(r.rating))}
+                  </span>
+                  <span style={{ color: "#666" }}>({r.reviews} reviews)</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
