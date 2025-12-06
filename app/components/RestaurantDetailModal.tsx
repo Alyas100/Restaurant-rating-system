@@ -89,6 +89,7 @@ export default function RestaurantDetailModal({
                                 <button
                                     onClick={onClose}
                                     className="absolute top-4 right-4 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+                                    aria-label="Close modal"
                                 >
                                     <X className="w-5 h-5 text-white" />
                                 </button>
