@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { Star, MapPin, Clock } from "lucide-react";
-import Image from "next/image";
 
 interface Restaurant {
     id: string;
@@ -10,6 +9,8 @@ interface Restaurant {
     cuisine: string;
     rating: number;
     reviews: number;
+    lat: number;
+    lng: number;
     image: string;
     address: string;
     price: string;
@@ -17,9 +18,10 @@ interface Restaurant {
 
 interface RestaurantListProps {
     restaurants: Restaurant[];
+    onRestaurantClick?: (restaurant: Restaurant) => void;
 }
 
-export default function RestaurantList({ restaurants }: RestaurantListProps) {
+export default function RestaurantList({ restaurants, onRestaurantClick }: RestaurantListProps) {
     return (
         <div className="space-y-4 h-full overflow-y-auto pr-2 custom-scrollbar">
             {restaurants.map((restaurant, index) => (
@@ -28,6 +30,7 @@ export default function RestaurantList({ restaurants }: RestaurantListProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
+                    onClick={() => onRestaurantClick?.(restaurant)}
                     className="glass-panel p-4 rounded-2xl hover:bg-white/15 transition-colors cursor-pointer group"
                 >
                     <div className="flex gap-4">

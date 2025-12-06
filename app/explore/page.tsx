@@ -1,10 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import RestaurantList from "../components/RestaurantList";
+import RestaurantDetailModal from "../components/RestaurantDetailModal";
+import SearchBox from "../components/SearchBox";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 // Dynamically import MapComponent to avoid SSR issues with Leaflet
 const MapComponent = dynamic(() => import("../components/MapComponent"), {
@@ -16,71 +19,61 @@ const MapComponent = dynamic(() => import("../components/MapComponent"), {
     ),
 });
 
-const MOCK_RESTAURANTS = [
-    {
-        id: "1",
-        name: "Indian Accent",
-        cuisine: "Modern Indian",
-        rating: 4.9,
-        reviews: 3420,
-        lat: 28.5921,
-        lng: 77.2383,
-        image: "/placeholder.jpg",
-        address: "The Lodhi, Lodhi Road, New Delhi",
-        price: "₹₹₹₹",
-    },
-    {
-        id: "2",
-        name: "Bukhara",
-        cuisine: "North Indian",
-        rating: 4.8,
-        reviews: 5100,
-        lat: 28.5968,
-        lng: 77.1729,
-        image: "/placeholder.jpg",
-        address: "ITC Maurya, Sardar Patel Marg, New Delhi",
-        price: "₹₹₹₹",
-    },
-    {
-        id: "3",
-        name: "Leo's Pizzeria",
-        cuisine: "Italian, Pizza",
-        rating: 4.6,
-        reviews: 890,
-        lat: 28.5529,
-        lng: 77.2407,
-        image: "/placeholder.jpg",
-        address: "Vasant Vihar, New Delhi",
-        price: "₹₹₹",
-    },
-    {
-        id: "4",
-        name: "Big Chill Cafe",
-        cuisine: "Italian, Continental",
-        rating: 4.7,
-        reviews: 2100,
-        lat: 28.5584,
-        lng: 77.2029,
-        image: "/placeholder.jpg",
-        address: "Khan Market, New Delhi",
-        price: "₹₹₹",
-    },
-    {
-        id: "5",
-        name: "Yeti - The Himalayan Kitchen",
-        cuisine: "Tibetan, Nepalese",
-        rating: 4.5,
-        reviews: 1200,
-        lat: 28.5463,
-        lng: 77.1903,
-        image: "/placeholder.jpg",
-        address: "Hauz Khas Village, New Delhi",
-        price: "₹₹",
-    },
-];
+interface Restaurant {
+    id: string;
+    name: string;
+    cuisine: string;
+    rating: number;
+    reviews: number;
+    lat: number;
+    lng: number;
+    image: string;
+    address: string;
+    price: string;
+}
 
 export default function ExplorePage() {
-    const restaurants = useMemo(() => MOCK_RESTAURANTS, []);
+    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+    const [mapCenter, setMapCenter] = useState<[number, number]>([28.6139, 77.2090]); // Default: Delhi
+    const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        const fetchRestaurants = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("restaurants")
+                    .select("*");
+
+                if (error) {
+                    console.error("Error fetching restaurants:", error.message || error);
+                    setRestaurants([]);
+                } else if (data) {
+                    setRestaurants(data as Restaurant[]);
+                }
+            } catch (err) {
+                console.error("Unexpected error fetching restaurants:", err);
+                setRestaurants([]);
+            }
+        };
+
+        fetchRestaurants();
+    }, []);
+
+    const handleLocationSelect = (lat: number, lng: number) => {
+        setMapCenter([lat, lng]);
+    };
+
+    const handleRestaurantClick = (restaurant: Restaurant) => {
+        setSelectedRestaurant(restaurant);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedRestaurant(null);
+    };
 
     return (
         <div className="h-screen w-full flex flex-col bg-[#0f0c29] overflow-hidden">
@@ -92,16 +85,24 @@ export default function ExplorePage() {
             </div>
 
             {/* Header */}
-            <header className="relative z-20 flex items-center justify-between px-6 py-4 glass-panel border-b border-white/10 rounded-none">
-                <div className="flex items-center gap-4">
+            <header className="relative z-20 flex flex-col md:flex-row items-center justify-between px-6 py-4 glass-panel border-b border-white/10 rounded-none gap-4">
+                <div className="flex items-center gap-4 w-full md:w-auto">
                     <Link href="/" className="p-2 rounded-full hover:bg-white/10 transition-colors">
                         <ArrowLeft className="w-5 h-5 text-white" />
                     </Link>
-                    <h1 className="text-xl font-bold text-white">Explore Delhi</h1>
+                    <h1 className="text-xl font-bold text-white hidden md:block">Explore</h1>
+                    <div className="flex-1 md:hidden">
+                        <SearchBox onLocationSelect={handleLocationSelect} />
+                    </div>
                 </div>
+
+                <div className="hidden md:block w-full max-w-md">
+                    <SearchBox onLocationSelect={handleLocationSelect} />
+                </div>
+
                 <div className="flex items-center gap-2">
-                    <div className="px-3 py-1 rounded-full bg-white/10 text-xs text-white/70">
-                        {restaurants.length} Restaurants Found
+                    <div className="px-3 py-1 rounded-full bg-white/10 text-xs text-white/70 whitespace-nowrap">
+                        {restaurants.length} Restaurants
                     </div>
                 </div>
             </header>
@@ -110,14 +111,24 @@ export default function ExplorePage() {
             <main className="relative z-10 flex-1 flex overflow-hidden p-4 gap-4">
                 {/* List View (Left Side) */}
                 <div className="w-full md:w-[400px] flex flex-col gap-4">
-                    <RestaurantList restaurants={restaurants} />
+                    <RestaurantList
+                        restaurants={restaurants}
+                        onRestaurantClick={handleRestaurantClick}
+                    />
                 </div>
 
                 {/* Map View (Right Side - Hidden on mobile, visible on md+) */}
                 <div className="hidden md:block flex-1 rounded-3xl overflow-hidden shadow-2xl border border-white/20">
-                    <MapComponent restaurants={restaurants} />
+                    <MapComponent restaurants={restaurants} center={mapCenter} />
                 </div>
             </main>
+
+            {/* Restaurant Detail Modal */}
+            <RestaurantDetailModal
+                restaurant={selectedRestaurant}
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+            />
         </div>
     );
 }
