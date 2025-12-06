@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
@@ -27,12 +27,20 @@ interface Restaurant {
 
 interface MapComponentProps {
     restaurants: Restaurant[];
+    center?: [number, number];
 }
 
-export default function MapComponent({ restaurants }: MapComponentProps) {
-    // Center on Delhi
-    const center: [number, number] = [28.6139, 77.2090];
+function MapController({ center }: { center?: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+        if (center) {
+            map.flyTo(center, 13);
+        }
+    }, [center, map]);
+    return null;
+}
 
+export default function MapComponent({ restaurants, center = [28.6139, 77.2090] }: MapComponentProps) {
     return (
         <div className="h-full w-full rounded-3xl overflow-hidden glass-panel border-0">
             <MapContainer
@@ -40,29 +48,36 @@ export default function MapComponent({ restaurants }: MapComponentProps) {
                 zoom={13}
                 style={{ height: "100%", width: "100%" }}
                 className="z-0"
+                minZoom={3}
+                maxBounds={[[-90, -180], [90, 180]]}
+                maxBoundsViscosity={1.0}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    noWrap={true}
                 />
-                {restaurants.map((restaurant) => (
-                    <Marker
-                        key={restaurant.id}
-                        position={[restaurant.lat, restaurant.lng]}
-                        icon={icon}
-                    >
-                        <Popup className="glass-popup">
-                            <div className="p-2">
-                                <h3 className="font-bold text-gray-900">{restaurant.name}</h3>
-                                <p className="text-sm text-gray-600">{restaurant.cuisine}</p>
-                                <div className="flex items-center gap-1 mt-1">
-                                    <span className="text-yellow-500">★</span>
-                                    <span className="text-sm font-medium text-gray-800">{restaurant.rating}</span>
+                <MapController center={center} />
+                {restaurants
+                    .filter((restaurant) => restaurant.lat != null && restaurant.lng != null)
+                    .map((restaurant) => (
+                        <Marker
+                            key={restaurant.id}
+                            position={[restaurant.lat, restaurant.lng]}
+                            icon={icon}
+                        >
+                            <Popup className="glass-popup">
+                                <div className="p-2 min-w-[150px]">
+                                    <h3 className="font-bold text-gray-900 text-base">{restaurant.name}</h3>
+                                    <p className="text-sm text-gray-600 mb-1">{restaurant.cuisine}</p>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-yellow-500">★</span>
+                                        <span className="text-sm font-bold text-gray-800">{restaurant.rating}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </Popup>
-                    </Marker>
-                ))}
+                            </Popup>
+                        </Marker>
+                    ))}
             </MapContainer>
         </div>
     );
