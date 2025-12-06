@@ -1,12 +1,11 @@
-// GET single / PUT update / DELETE
 import { fetchRestaurantById } from "@/utils/supabase/restaurant";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const restaurantId = params.id;
+    const { id: restaurantId } = await params;
 
     if (!restaurantId) {
       return Response.json(

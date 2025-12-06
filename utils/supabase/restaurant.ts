@@ -7,3 +7,15 @@ export async function fetchAllRestaurants() {
   if (error) throw error;
   return data;
 }
+
+export async function fetchRestaurantById(id: string | number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}

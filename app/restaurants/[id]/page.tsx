@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronLeft, Globe, MapPin, Phone } from "lucide-react";
+import { ChevronLeft, Globe, Loader, MapPin, Phone } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Restaurant = {
   id: number;
@@ -14,6 +14,8 @@ type Restaurant = {
   rating: number;
   reviews: number;
   address: string;
+  lat?: number;
+  lng?: number;
 };
 
 type Review = {
@@ -24,76 +26,7 @@ type Review = {
   date: string;
 };
 
-// Mock Data - Same as main page
-const mockRestaurants: Restaurant[] = [
-  {
-    id: 1,
-    name: "Spice Haven",
-    category: "Indian",
-    emoji: "🍛",
-    description:
-      "Authentic Indian cuisine with traditional recipes passed down through generations.",
-    rating: 4.5,
-    reviews: 120,
-    address: "123 Main St, Downtown, City 12345",
-  },
-  {
-    id: 2,
-    name: "Kimchi House",
-    category: "Korean",
-    emoji: "🥢",
-    description:
-      "Modern Korean restaurant featuring bibimbap, bulgogi, and delicious side dishes.",
-    rating: 4.8,
-    reviews: 98,
-    address: "456 Oak Ave, Midtown, City 12345",
-  },
-  {
-    id: 3,
-    name: "La Bella Italia",
-    category: "Italian",
-    emoji: "🍝",
-    description:
-      "Cozy Italian trattoria with handmade pasta and authentic sauces.",
-    rating: 4.6,
-    reviews: 156,
-    address: "789 Pine Rd, Uptown, City 12345",
-  },
-  {
-    id: 4,
-    name: "The Burger Joint",
-    category: "Western",
-    emoji: "🍔",
-    description:
-      "Gourmet burgers with premium ingredients and creative toppings.",
-    rating: 4.3,
-    reviews: 204,
-    address: "321 Elm St, Downtown, City 12345",
-  },
-  {
-    id: 5,
-    name: "Sakura Sushi",
-    category: "Japanese",
-    emoji: "🍣",
-    description:
-      "Fresh sushi bar with skilled chefs and premium fish selection.",
-    rating: 4.7,
-    reviews: 178,
-    address: "654 Maple Dr, Harbor, City 12345",
-  },
-  {
-    id: 6,
-    name: "Taco Fiesta",
-    category: "Mexican",
-    emoji: "🌮",
-    description: "Vibrant Mexican restaurant with street tacos and margaritas.",
-    rating: 4.4,
-    reviews: 142,
-    address: "987 Cedar Ln, Arts District, City 12345",
-  },
-];
-
-// Mock Reviews
+// Mock reviews - in a real app, these would come from Supabase too
 const mockReviews: Review[] = [
   {
     id: 1,
@@ -128,35 +61,40 @@ const mockReviews: Review[] = [
 export default function RestaurantDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const restaurantId = Number(params.id);
+  const restaurantId = params.id as string;
 
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [reviews, setReviews] = useState<Review[]>(mockReviews);
+  const [loading, setLoading] = useState(true);
   const [newReview, setNewReview] = useState({
     author: "",
     rating: 5,
     text: "",
   });
-  const [reviews, setReviews] = useState<Review[]>(mockReviews);
 
-  // Find restaurant
-  const restaurant = mockRestaurants.find((r) => r.id === restaurantId);
+  // Fetch restaurant data
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const response = await fetch(`/api/restaurants/${restaurantId}`);
+        console.log("DBG", response);
+        if (!response.ok) {
+          throw new Error("Restaurant not found");
+        }
+        const data = await response.json();
+        setRestaurant(data);
+      } catch (error) {
+        console.error("Error fetching restaurant:", error);
+        setRestaurant(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!restaurant) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-6">
-            Restaurant Not Found
-          </h1>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
+    if (restaurantId) {
+      fetchRestaurant();
+    }
+  }, [restaurantId]);
 
   const handleAddReview = () => {
     if (!newReview.author.trim() || !newReview.text.trim()) {
@@ -175,6 +113,32 @@ export default function RestaurantDetailPage() {
     setReviews([review, ...reviews]);
     setNewReview({ author: "", rating: 5, text: "" });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader className="animate-spin text-indigo-400" size={40} />
+      </div>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white mb-6">
+            Restaurant Not Found
+          </h1>
+          <button
+            onClick={() => router.push("/restaurants")}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
+          >
+            Back to Restaurants
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -220,7 +184,7 @@ export default function RestaurantDetailPage() {
               <div className="text-right">
                 <div className="flex items-center gap-2 text-3xl font-bold mb-2">
                   <span className="text-yellow-400">⭐</span>
-                  {restaurant.rating}
+                  {restaurant.rating.toFixed(1)}
                 </div>
                 <p className="text-slate-400">{restaurant.reviews} reviews</p>
               </div>
