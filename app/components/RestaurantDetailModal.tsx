@@ -34,10 +34,30 @@ export default function RestaurantDetailModal({
 }: RestaurantDetailModalProps) {
     if (!restaurant) return null;
 
-    // Calculate metrics (mock data for now - these can be added to the database later)
-    const avgCostPerPerson = restaurant.price === "₹₹₹₹" ? "₹2,500+" :
-        restaurant.price === "₹₹₹" ? "₹1,000-2,500" :
-            restaurant.price === "₹₹" ? "₹500-1,000" : "₹200-500";
+    // Map price levels for multiple currencies
+    const priceLevelMap: { [key: string]: string } = {
+        // Indian Rupee
+        "₹₹₹₹": "₹2,500+",
+        "₹₹₹": "₹1,000-2,500",
+        "₹₹": "₹500-1,000",
+        "₹": "₹200-500",
+        // US Dollar
+        "$$$$": "$200+",
+        "$$$": "$100-200",
+        "$$": "$50-100",
+        "$": "$20-50",
+        // Euro
+        "€€€€": "€200+",
+        "€€€": "€100-200",
+        "€€": "€50-100",
+        "€": "€20-50",
+        // Japanese Yen
+        "¥¥¥¥": "¥20,000+",
+        "¥¥¥": "¥10,000-20,000",
+        "¥¥": "¥5,000-10,000",
+        "¥": "¥2,000-5,000",
+    };
+    const avgCostPerPerson = priceLevelMap[restaurant.price] || restaurant.price || "N/A";
 
     return (
         <AnimatePresence>
